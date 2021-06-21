@@ -1,0 +1,35 @@
+trigger:
+- master
+pool:
+  vmImage: 'ubuntu-latest'
+parameters:
+- name: groupname
+  type: string
+  default: './'
+
+- name: groupdesc
+  type: string
+  default: 'hi all'
+
+- name: variablename
+  type: string
+  default: 'Devops'
+
+- name: variablevalue
+  type: string
+  default: 'Joe'
+
+jobs:
+  - job: creating_group
+    steps:
+      - task: PowerShell@2
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        inputs:
+          filePath: './setvariables.ps1'
+          arguments: 
+              -workspace $(Pipeline.Workspace)
+              -path ${{parameters.groupname}}
+              -bearerToken "$env:SYSTEM_ACCESSTOKEN"
+              -organization $(System.CollectionUri)
+              -project $(System.TeamProject)
