@@ -4,9 +4,7 @@ parameters:
 - name: templates
   type: object
   default: []
-- name: keyVaultId
-  type: string
-  default: ''
+
 - name: outputDirectory
   type: string
   default: 'templates'
