@@ -1,0 +1,157 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "0.1.0.0",
+	"parameters": {
+		"wafPaymentsName": {
+			"type": "string",
+			"metadata": {
+				"description": "Name of Waf Policy for Payments"
+			}
+		},
+		"wafPaymentsPolicyMode": {
+			"type": "string",
+			"metadata": {
+				"description": "The mode of the policy. - Prevention or Detection"
+			}
+		},
+		"AzureConnection": {
+			"type": "string",
+			"defaultValue": "CTS Team"
+		},
+		"solution": {
+			"type": "string"
+		},
+		"create_date": {
+			"type": "string",
+			"defaultValue": "[utcNow('yyyy-MM-dd')]"
+		},
+		"environmentClass": {
+			"type": "string"
+		}
+	},
+	"variables": {
+		"location": "[resourceGroup().location]",
+		"standardTags":{
+			"Creator": "[parameters('AzureConnection')]",
+			"Date": "[parameters('create_date')]",
+			"Solution": "[parameters('solution')]",
+			"EnvironmentClass": "[parameters('environmentClass')]"
+		}
+	},
+	"resources": [
+		{
+			"apiVersion": "2019-09-01",
+			"type": "Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies",
+			"name": "[parameters('wafPaymentsName')]",
+			"location": "[variables('location')]",
+			"tags": "[union(variables('standardTags'),json('{\"ResourceType\":\"WAF\"}'))]",
+			"properties": {
+				"policySettings": {
+					"fileUploadLimitInMb": 100,
+					"maxRequestBodySizeInKb": 128,
+					"mode": "[parameters('wafPaymentsPolicyMode')]",
+					"requestBodyCheck": true,
+					"state": "Enabled"
+				},
+				"managedRules": {
+					"exclusions": [],
+					"managedRuleSets": [
+						{
+							"ruleSetType": "OWASP",
+							"ruleSetVersion": "3.1",
+							"ruleGroupOverrides": [
+								{
+									"ruleGroupName": "REQUEST-920-PROTOCOL-ENFORCEMENT",
+									"rules": [
+										{
+											"ruleId": "920210",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "920230",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "920440",
+											"state": "Disabled"
+										}
+									]
+								},
+								{
+									"ruleGroupName": "REQUEST-930-APPLICATION-ATTACK-LFI",
+									"rules": [
+										{
+											"ruleId": "930120",
+											"state": "Disabled"
+										}
+									]
+								},
+								{
+									"ruleGroupName": "REQUEST-942-APPLICATION-ATTACK-SQLI",
+									"rules": [
+										{
+											"ruleId": "942370",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "942360",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "942330",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "942260",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "942200",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "942120",
+											"state": "Disabled"
+										},
+										{
+											"ruleId": "942110",
+											"state": "Disabled"
+										}
+									]
+								},
+								{
+									"ruleGroupName": "REQUEST-932-APPLICATION-ATTACK-RCE",
+									"rules": [
+										{
+											"ruleId": "932100",
+											"state": "Disabled"
+										}
+									]
+								},
+								{
+									"ruleGroupName": "REQUEST-931-APPLICATION-ATTACK-RFI",
+									"rules": [
+										{
+											"ruleId": "931130",
+											"state": "Disabled"
+										}
+									]
+								}
+							]
+						},
+						{
+							"ruleSetType": "Microsoft_BotManagerRuleSet",
+							"ruleSetVersion": "0.1"
+						}
+					]
+				}
+			}
+		}
+	],
+	"outputs": {
+		"paymentsWafId": {
+			"type": "string",
+			"value": "[resourceId('Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies',parameters('wafPaymentsName'))]"
+		}
+	}
+}
