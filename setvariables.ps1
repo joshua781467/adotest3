@@ -12,6 +12,7 @@ Write-Output $bearerToken
 Write-Output $organization
 Write-Output $project
 $val = [System.Environment]::GetEnvironmentVariable("joevariables")
+Write-Host "------------------"
 
 Write-Output $val
 Import-Module -Name ./VariableGroups.psd1 -Force
