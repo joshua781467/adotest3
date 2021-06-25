@@ -5,13 +5,15 @@
         [string]$bearerToken,
         [string]$organization,
         [string]$project
+        [object]$a
     )
 Write-Output $workspace
 Write-Output $path
 Write-Output $bearerToken
 Write-Output $organization
 Write-Output $project
-$val = [System.Environment]::GetEnvironmentVariable("joevariables")
+Write-Output $a
+
 Write-Host "------------------"
 
 Write-Output $val
