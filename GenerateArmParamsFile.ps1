@@ -1,7 +1,7 @@
 param (
   [Parameter(Mandatory = $true)]
   [String]
-  $TemplateFile,
+  $TemplateFile ='./waf-transact.json',
 
   [Parameter(Mandatory = $true)]
   [String]
