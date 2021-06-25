@@ -11,7 +11,9 @@ Write-Output $path
 Write-Output $bearerToken
 Write-Output $organization
 Write-Output $project
- 
+$val = [System.Environment]::GetEnvironmentVariable("joevariables")
+
+Write-Output $val
 Import-Module -Name ./VariableGroups.psd1 -Force
 Write-Host "Generation variables for path: $path"
 foreach ($file in Get-ChildItem -Path $path -Filter variables.json*) {
