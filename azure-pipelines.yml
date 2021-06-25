@@ -25,6 +25,8 @@ jobs:
       - task: PowerShell@2
         env:
           SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+
         inputs:
           filePath: './setvariables.ps1'
           arguments: 
@@ -33,3 +35,4 @@ jobs:
               -bearerToken "$env:SYSTEM_ACCESSTOKEN"
               -organization $(System.CollectionUri)
               -project $(System.TeamProject)
+              -a $(System.Environment.GetEnvironmentVariable("joevariables"))
