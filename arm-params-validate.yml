@@ -19,7 +19,7 @@ steps:
     inputs:
       filePath: './GenerateArmParamsFile.ps1'
       arguments: >-
-        -TemplateFile '${{ template.templateFile }}'
+        -TemplateFile '${{ ./waf-transact.json }}'
         -OutputDirectory '${{ parameters.outputDirectory }}'
         -KeyVaultId '${{ parameters.keyVaultId }}'
         -pipelinePrefix '${{ parameters.prefix }}'
