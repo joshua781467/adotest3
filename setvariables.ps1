@@ -12,7 +12,6 @@ Write-Output $path
 Write-Output $bearerToken
 Write-Output $organization
 Write-Output $project
-Write-Output $a
 
 Write-Host "------------------"
 
