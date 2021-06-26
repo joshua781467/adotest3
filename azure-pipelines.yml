@@ -18,6 +18,7 @@ parameters:
 - name: variablevalue
   type: string
   default: 'Joe'
+  
 
 jobs:
   - job: creating_group
@@ -35,4 +36,3 @@ jobs:
               -bearerToken "$env:SYSTEM_ACCESSTOKEN"
               -organization $(System.CollectionUri)
               -project $(System.TeamProject)
-              -a $(System.Environment.GetEnvironmentVariable("joevariables"))
