@@ -5,7 +5,6 @@
         [string]$bearerToken,
         [string]$organization,
         [string]$project
-        [object]$a
     )
 Write-Output $workspace
 Write-Output $path
@@ -14,6 +13,8 @@ Write-Output $organization
 Write-Output $project
 
 Write-Host "------------------"
+$val = [System.Environment]::GetEnvironmentVariable("$($pipelinePrefix.ToUpper())_$($appPrefix.ToUpper())_$($_.ToUpper().Replace('-', '_'))")
+
 
 
 Import-Module -Name ./VariableGroups.psd1 -Force
