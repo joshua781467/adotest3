@@ -13,7 +13,7 @@ Write-Output $organization
 Write-Output $project
 
 Write-Host "------------------"
-$val = [System.Environment]::GetEnvironmentVariable("Joshua N")
+$val = [System.Environment]::GetEnvironmentVariable()
 
 Write-Output $val
 
