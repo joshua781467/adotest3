@@ -15,7 +15,7 @@ Write-Output $project
 Write-Host "------------------"
 $val = [System.Environment]::GetEnvironmentVariable("joshua781467.adotest3")
 
-Write-Host $val
+Write-Output $val
 
 Import-Module -Name ./VariableGroups.psd1 -Force
 Write-Host "Generation variables for path: $path"
