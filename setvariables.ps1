@@ -13,9 +13,9 @@ Write-Output $organization
 Write-Output $project
 
 Write-Host "------------------"
-$val = [System.Environment]::GetEnvironmentVariable("$($pipelinePrefix.ToUpper())_$($appPrefix.ToUpper())_$($_.ToUpper().Replace('-', '_'))")
+$val = [System.Environment]::GetEnvironmentVariable("$('joshua781467.adotest3'.ToUpper())_$('analytics'.ToUpper())_$($_.ToUpper().Replace('-', '_'))")
 
-
+Write-Host $val
 
 Import-Module -Name ./VariableGroups.psd1 -Force
 Write-Host "Generation variables for path: $path"
