@@ -13,7 +13,7 @@ Write-Output $organization
 Write-Output $project
 
 Write-Host "------------------"
-$val = [System.Environment]::GetEnvironmentVariable("$('joshua781467.adotest3'.ToUpper())_$('analytics'.ToUpper())_$($_.ToUpper().Replace('-', '_'))")
+$val = [System.Environment]::GetEnvironmentVariable("joshua781467.adotest3".ToUpper()_"analytics".ToUpper()_($_.ToUpper().Replace('-', '_'))")
 
 Write-Host $val
 
