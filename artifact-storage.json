@@ -1,0 +1,177 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "artifactStorageAccountName": {
+      "type": "String"
+    },
+    "artifactStorageAccountType": {
+      "type": "String"
+    },
+    "keyVaultName": {
+      "type": "String"
+    },
+    "StorageSaSTokenName": {
+      "type": "String",
+      "defaultValue": "artifactStorageSasToken"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specifies the location in which the Azure Storage resources should be deployed."
+      }
+    },
+    "accountSasProperties": {
+      "type": "object",
+      "defaultValue": {
+        "signedServices": "bfqt",
+        "signedPermission": "cdlruwap",
+        "signedExpiry": "2030-12-31T00:00:01Z",
+        "signedResourceTypes": "sco"
+      }
+    },
+    "coreResourceGroup": {
+      "type": "String"
+    },
+    "nuodbContainerName": {
+      "type": "String",
+      "defaultValue": "nuodbproduction"
+    },
+    "sqldbContainerName": {
+      "type": "String",
+      "defaultValue": "sqldb"
+    },
+    "AzureConnection": {
+			"type": "string",
+			"defaultValue": "CTS Team"
+		},
+		"solution": {
+			"type": "string"
+		},
+		"create_date": {
+			"type": "string",
+			"defaultValue": "[utcNow('yyyy-MM-dd')]"
+		},
+    "environmentClass": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "artifactStorageAccountName": "[parameters('artifactStorageAccountName')]",
+    "standardTags":{
+      "Creator": "[parameters('AzureConnection')]",
+      "Date": "[parameters('create_date')]",
+      "Solution": "[parameters('solution')]",
+      "EnvironmentClass": "[parameters('environmentClass')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "comments": "Storage for deployment-time artifacts. This will be written to by manual or external processes to provide application artifacts for deployment, or at deployment time by the pipelines themselves to pass code or initial data and configuration to VMs",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('artifactStorageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "tags":  "[union(variables('standardTags'),json('{\"ResourceType\":\"Storage Account\"}'))]",
+      "sku": {
+        "name": "[parameters('artifactStorageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false,
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Deny"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
+            },
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "accessTier": "Hot"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2019-06-01",
+      "name": "[concat(variables('artifactStorageAccountName'), '/default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('artifactStorageAccountName'))]"
+      ],
+      "sku": {
+        "name": "[parameters('artifactStorageAccountType')]"
+      },
+      "properties": {
+        "publicAccess": "None",
+        "cors": {
+          "corsRules": []
+        },
+        "deleteRetentionPolicy": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2018-07-01",
+      "name": "[concat(variables('artifactStorageAccountName'), '/default/', parameters('nuodbContainerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('artifactStorageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2018-07-01",
+      "name": "[concat(variables('artifactStorageAccountName'), '/default/', parameters('sqldbContainerName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('artifactStorageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "AddSasTokenToKeyVault",
+      "apiVersion": "2018-11-01",
+      "resourceGroup": "[parameters('coreResourceGroup')]",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('artifactStorageAccountName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "name": "[concat(parameters('keyVaultName'), '/', parameters('StorageSaSTokenName'))]",
+              "apiVersion": "2018-02-14",
+              "properties": {
+                "value": "[listAccountSas(variables('artifactStorageAccountName'), '2018-07-01', parameters('accountSasProperties')).accountSasToken]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
