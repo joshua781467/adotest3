@@ -20,6 +20,8 @@ param (
   $appPrefix = ''
 )
 
+Write-Host "fsdvsdvsdggweg"
+
 Write-Host "##vso[task.setvariable variable=ArmTemplateFile;]"
 Write-Host "##vso[task.setvariable variable=ArmTemplateParametersFile;]"
 
