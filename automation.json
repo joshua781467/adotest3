@@ -1,0 +1,199 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "laWorkspaceName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name for the log analytics workspace"
+        }
+      },
+      "laWorkspaceRGName": {
+          "type": "string",
+          "metadata": {
+              "description": "The name for the log analytics workspace RG"
+          }
+      },
+      "automationAccountName": {
+        "type": "string",
+        "metadata": {
+          "description": "Automation account name"
+        }
+      },
+      "ApplicationId": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "ApplicationID of the service principal."
+        }
+      },
+      "ClientKey": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "The service principal application key"
+        }
+      },
+      "AzureConnection": {
+        "type": "string",
+        "defaultValue": "CTS Team"
+      },
+      "solution": {
+        "type": "string"
+      },
+      "create_date": {
+        "type": "string",
+        "defaultValue": "[utcNow('yyyy-MM-dd')]"
+      },
+      "environmentClass": {
+        "type": "string"
+      }
+    },
+    "variables": {
+      "location": "[resourceGroup().location]",
+      "laWorkspaceId": "[resourceid(parameters('laWorkspaceRGName'),'Microsoft.OperationalInsights/workspaces', parameters('laWorkspaceName'))]",
+      "standardTags":{
+        "Creator": "[parameters('AzureConnection')]",
+        "Date": "[parameters('create_date')]",
+        "Solution": "[parameters('solution')]",
+        "EnvironmentClass": "[parameters('environmentClass')]"
+      },
+      "connectionTypeName": "AutomationAzureConnection",
+      "connectionName": "RunAsConnection",
+      "azModules": [
+        {
+          "name": "Az.Accounts",
+          "version": "2.2.2"
+        }
+      ]
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Automation/automationAccounts",
+        "apiVersion": "2020-01-13-preview",
+        "name": "[parameters('automationAccountName')]",
+        "location": "[variables('location')]",
+        "tags":  "[union(variables('standardTags'),json('{\"ResourceType\":\"Automation Account\"}'))]",
+        "dependsOn": [
+        ],
+        "properties": {
+          "sku": {
+            "name": "Basic"
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Automation/automationAccounts/connectionTypes",
+        "apiVersion": "2015-10-31",
+        "name": "[concat(parameters('automationAccountName'), '/', variables('connectionTypeName'))]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+        ],
+        "properties": {
+            "isGlobal": false,
+            "fieldDefinitions": {
+                "ApplicationId": {
+                    "isEncrypted": true,
+                    "isOptional": false,
+                    "type": "System.String"
+                },
+                "TenantId": {
+                    "isEncrypted": true,
+                    "isOptional": false,
+                    "type": "System.String"
+                },
+                "ClientKey": {
+                    "isEncrypted": true,
+                    "isOptional": false,
+                    "type": "System.String"
+                },
+                "SubscriptionId": {
+                    "isEncrypted": false,
+                    "isOptional": false,
+                    "type": "System.String"
+                }
+            }
+        }
+      },
+      {
+        "type": "Microsoft.Automation/automationAccounts/connections",
+        "apiVersion": "2015-10-31",
+        "name": "[concat(parameters('automationAccountName'), '/', variables('connectionName'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Automation/automationAccounts/connectionTypes', parameters('automationAccountName'), variables('connectionTypeName'))]"
+        ],
+        "properties": {
+            "connectionType": {
+                "name": "[variables('connectionTypeName')]"
+            },
+            "fieldDefinitionValues": {
+              "SubscriptionId": "[subscription().subscriptionId]",
+              "TenantId": "[subscription().tenantId]",
+              "ApplicationId":"[parameters('ApplicationId')]",
+              "ClientKey": "[parameters('ClientKey')]"
+            }
+        }
+      },
+      {
+        "type": "Microsoft.Automation/automationAccounts/modules",
+        "apiVersion": "2015-10-31",
+        "name": "[concat(parameters('automationAccountName'), '/', variables('azModules')[copyIndex()].name)]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts', parameters('automationAccountName'))]"
+        ],
+        "properties": {
+            "contentLink": {
+              "uri": "[concat('https://www.powershellgallery.com/api/v2/package/', variables('azModules')[copyIndex('azModulesIndex')].name, '/', variables('azModules')[copyIndex('azModulesIndex')].version)]"
+            }
+        },
+        "copy": {
+          "name": "azModulesIndex",
+          "count": "[length(variables('azModules'))]"
+        }
+      },
+      {
+        "type": "Microsoft.Automation/automationAccounts/modules",
+        "apiVersion": "2015-10-31",
+        "name": "[concat(parameters('automationAccountName'), '/Az.Compute')]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Automation/automationAccounts/modules', parameters('automationAccountName'), 'Az.Accounts')]"
+        ],
+        "properties": {
+            "contentLink": {
+              "uri": "https://www.powershellgallery.com/api/v2/package/Az.Compute/4.7.0"
+            }
+        }
+      },
+      {
+        "type": "Microsoft.Automation/automationAccounts/providers/diagnosticSettings",
+        "apiVersion": "2017-05-01-preview",
+        "name": "[concat(parameters('automationAccountName'),'/Microsoft.Insights/system')]",
+        "dependsOn": [
+          "[parameters('automationAccountName')]"
+        ],
+        "properties": {
+          "workspaceId": "[variables('laWorkspaceId')]",
+          "logs": [
+            {
+                "category": "JobLogs",
+                "enabled": true
+            },
+            {
+                "category": "JobStreams",
+                "enabled": true
+            },
+            {
+                "category": "DscNodeStatus",
+                "enabled": true
+            }
+          ],
+          "metrics": [
+            {
+              "category": "AllMetrics",
+              "enabled": true
+            }
+          ]
+        }
+      }
+    ]
+  }
