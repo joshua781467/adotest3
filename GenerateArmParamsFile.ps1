@@ -21,6 +21,8 @@ param (
 )
 
 Write-Host "fsdvsdvsdggweg"
+Write-Output $OutputDirectory
+
 
 Write-Host "##vso[task.setvariable variable=ArmTemplateFile;]"
 Write-Host "##vso[task.setvariable variable=ArmTemplateParametersFile;]"
