@@ -1,5 +1,6 @@
 pool:
-   mymac
+    mymac
+parameters:
 - name: firstrun
   displayName: Import images from CTSDev registry ?
   type: boolean
