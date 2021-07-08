@@ -1,5 +1,4 @@
-pool:
-    mymac
+
 parameters:
 - name: firstrun
   displayName: Import images from CTSDev registry ?
