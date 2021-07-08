@@ -68,6 +68,40 @@ stages:
               resourceGroup: $(coreResourceGroup)
         prefix: core
         outputDirectory: $(Build.StagingDirectory)/templates${{ parameters.envName }}/
+
+  - deployment: core
+    displayName: 'Deploy Resources'
+    environment: 'Development'
+    dependsOn: templates
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          #This task requires the provisioning secrets to inject them at provisioning time
+          - task: AzureResourceGroupDeployment@2
+            displayName: "KeyVault and ACR ${{ parameters.envName }}"
+            name: "kvacr${{ parameters.envName }}"
+            inputs:
+              azureSubscription: $(AzureConnection)
+              resourceGroupName: $(coreResourceGroup)
+              location: $(location)
+              csmFile: $(Pipeline.Workspace)/pre-provision-templates${{ parameters.envName }}/core-resources.json
+              csmParametersFile: $(Pipeline.Workspace)/pre-provision-templates${{ parameters.envName }}/core-resources.params.json
+              overrideParameters: -isDr ${{parameters.secondary}} -KeyVaultSecrets {"secrets":[{"name":"DevOpsPAT", "value":"$(DevOpsPAT)"}, {"name":"journeymanagerlicensekey", "value":"$(journeymanagerlicensekey)"}, {"name":"sftppassword", "value":"$(sftppassword)"}, {"name":"designitepassword", "value":"$(designitepassword)"}]}
+              #overrideParameters: -isDr ${{parameters.secondary}} -KeyVaultSecrets {"secrets":[{"name":"designitepassword", "value":"$(designitepassword)"}, {"name":"DevOpsPAT", "value":"$(DevOpsPAT)"}, {"name":"journeymanagerlicensekey", "value":"$(journeymanagerlicensekey)"}, {"name":"paymentsdbbackupstoragesastoken", "value":"$(paymentsdbbackupstoragesastoken)"}, {"name":"transactdbbackupstoragesastoken", "value":"$(transactdbbackupstoragesastoken)"}, {"name":"transactsftppassword", "value":"$(transactsftppassword)"}]}
+              deploymentName: "Core-$(Build.BuildNumber)"
         
+          - task: AzureResourceGroupDeployment@2
+            displayName: "Azure Automation Account ${{ parameters.envName }}"
+            name: "automation${{ parameters.envName }}"
+            inputs:
+              azureSubscription: $(AzureConnection)
+              resourceGroupName: $(coreResourceGroup)
+              location: $(location)
+              csmFile: $(Pipeline.Workspace)/pre-provision-templates${{ parameters.envName }}/automation.json
+              csmParametersFile: $(Pipeline.Workspace)/pre-provision-templates${{ parameters.envName }}/automation.params.json
+              overrideParameters: -ApplicationId $servicePrincipalId -ClientKey $servicePrincipalKey
+              addSpnToEnvironment: true
+              deploymentName: "Core-Automation-$(Build.BuildNumber)"      
 
 
