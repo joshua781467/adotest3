@@ -1,5 +1,3 @@
-pool:
-    mymac
 parameters:
 - name: firstrun
   displayName: Import images from CTSDev registry ?
@@ -69,6 +67,7 @@ stages:
         prefix: core
         outputDirectory: $(Build.StagingDirectory)/templates${{ parameters.envName }}/
 
-      
-
-
+    - task: PublishPipelineArtifact@1
+      inputs:
+        artifactName: 'pre-provision-templates${{ parameters.envName }}'
+        path: $(Build.StagingDirectory)/templates${{ parameters.envName }}/
